@@ -155,7 +155,16 @@ def auth(client_id, client_secret, username, password):
 
 
 def make_mp4_posts(auth,  post_id, backdrop='wp.jpg', output='final.mp4', Xcord=100, Ycord=100, color=(255, 255, 255)):
+    """
+    A functions which created post videos; Taking a long post and slicing it into different frams; putting it all together in one video
 
+    - auth: a praw auth object
+    - post_id: id of the post
+    - backdrop: looks for the backdrop image in assets/
+    - output: output file path with name
+    - Xcord, Ycord: specifies where the text should be located in the string.
+    - color: Color in the rgb format as a tuple
+    """
     post = get_post(auth, post_id, get_body=True)[0]
     body = post['body']
     post_author = post['author']
@@ -220,14 +229,16 @@ def make_mp4_posts(auth,  post_id, backdrop='wp.jpg', output='final.mp4', Xcord=
 
 def make_mp4_comments(auth, post_id, backdrop='wp.jpg', output='final.mp4', number_of_comments=10, font=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
     """
-    A function which creates a video from jpg and audio files of reddit posts (based on the permalink).
+    A function which creates a video from jpg and audio files of reddit posts with the id.
 
-    permalink: REQUIRED the link of the post after "reddit.com"
-    title: WILL BE REMOVED for now, you need to pass in the title
-    output: name/path of the output file
-    number_of_comments: how many comments to scrape; default 10
-    Xcord, Ycord: Define the position of the text on the image
-    color: Color of the text
+    - auth: a praw instance, can be created by passing in credentials to the auth function
+    - post_id: The id of the post; example - qvcxdt
+    - backdrop: Looks for the image in assets/
+    - output: path (with name) of the output file
+    - number_of_comments: Number of comments to be scraped
+    - font: Font size
+    - Xcord, Ycord: Define the position of the text on the image
+    - color: Color of the text
     """
     check_folders()
     base_image_path = 'images'
@@ -250,12 +261,6 @@ def make_mp4_comments(auth, post_id, backdrop='wp.jpg', output='final.mp4', numb
     for words in wrap_text(title, width=90):
         wrapped_title += words + '\n'
 
-    # Save the title image
-    # base = Image.open(backdrop_image)
-    # font = ImageFont.truetype(f'{base_assets_path}/font.ttf', 30)
-    # base_edit = ImageDraw.Draw(base)
-    # base_edit.text((Xcord, Ycord), wrapped_title, color, font=font)
-    # base.save(f'{base_image_path}/0.jpg')
     create_image(wrapped_title, f'{base_image_path}/0.jpg', backdrop=backdrop,
                  Xcord=Xcord, Ycord=Ycord, color=color, font=font)
 
@@ -294,11 +299,6 @@ def make_mp4_comments(auth, post_id, backdrop='wp.jpg', output='final.mp4', numb
         wrapped_text += word_list[-1]
 
         # Save a jpg of the text
-        # font = ImageFont.truetype('assets/font.ttf', 30)
-        # base_edit = ImageDraw.Draw(base)
-        # base_edit.text((Xcord, Ycord), wrapped_text,
-        #                (237, 230, 211), font=font)
-        # base.save(f'{base_image_path}/{i}.jpg')
         create_image(wrapped_text, f'{base_image_path}/{i}.jpg', backdrop=backdrop,
                      Xcord=Xcord, Ycord=Ycord, color=color, font=font)
 
@@ -317,8 +317,11 @@ def make_mp4_comments(auth, post_id, backdrop='wp.jpg', output='final.mp4', numb
     concatenate_video_moviepy(video_clips, output)
 
 
-with open('credentials.json') as file:
-    data = json.loads(file.read())
+try:
+    with open('credentials.json') as file:
+        data = json.loads(file.read())
+except:
+    print('The file wasnt found; or the credentials werent in the correct format')
 
 user_agent = data['user_agent']
 client_id = data['client_id']
@@ -337,3 +340,7 @@ desktop = os.path.join(os.getcwd(), '..', 'output.mp4')
 make_mp4_comments(a, 'qv7kun', backdrop='alternate1.jpg',
                   number_of_comments=10, output=desktop)
 """
+
+desktop = os.path.join(os.getcwd(), '..', 'output.mp4')
+make_mp4_comments(a, 'qv7kun', backdrop='alternate1.jpg',
+                  number_of_comments=10, output=desktop)

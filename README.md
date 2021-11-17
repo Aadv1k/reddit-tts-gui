@@ -6,7 +6,7 @@ A basic reddit tts video generator
 
 - Generate videos for subs based on comments,(askreddit) so reading individual comments
 - Generate videos for subs with longer posts,(entitledparents), so slicing the post into multiple frames to fit the text.
-- Functionality to change the backdrop
+- Optional customizability options to change the font, backdrop, position of text on the screen
 
 # Todo
 
