@@ -1,4 +1,12 @@
+import PySimpleGUI as sg
+from re import sub
+import tkinter as tk
+from tkinter import *
+from tkinter import font
 from types import WrapperDescriptorType
+from PIL.ImageColor import colormap
+from PySimpleGUI.PySimpleGUI import WIN_CLOSED
+from bs4.element import ContentMetaAttributeValue, whitespace_re
 import moviepy
 from moviepy.editor import AudioFileClip, ImageClip, TextClip, CompositeVideoClip, VideoFileClip
 from moviepy.editor import *
@@ -163,7 +171,6 @@ def md_to_text(md):
 
 
 # MAIN
-
 
 def auth(client_id, client_secret, username, password):
     return praw.Reddit(
@@ -367,6 +374,66 @@ make_mp4_comments(a, 'qv7kun', backdrop='alternate1.jpg',
 
 """
 
-desktop = os.path.join(os.getcwd(), '..', 'output.mp4')
-make_mp4_comments(a, 'qv4oha', backdrop='alternate1.jpg',
-                  number_of_comments=10, output='out.mp4')
+sg.theme('DarkAmber')   # Add a touch of color
+# All the stuff inside your window.
+text = ""
+first_half = [
+    [
+        sg.In()
+    ],
+    [
+        sg.Button('Get comments'),
+        sg.Button('Get posts')
+    ],
+    [
+        sg.Multiline(size=(90, 30), font=('Consolas', 9),
+                     key='-NICE-', do_not_clear=False)
+    ],
+]
+
+
+window = sg.Window('Window Title', first_half)
+# Event Loop to process "events" and get the "values" of the inputs
+while True:
+    event, values = window.read()
+    number_of_comments = 5
+    post_id = ''
+    type = ''
+
+    if event == 'Get comments':  # if user closes window or clicks cancel
+        inp = list(window.read())[1]
+        type = 'gc'
+        if inp[0] != ' ':
+            try:
+                data = get_comment(a, inp[0])
+                post_id = inp[0]
+                for i in data:
+                    window['-NICE-'].print(
+                        f"author: {i['author']}\ncomment: {i['body']}\n\n")
+            except:
+                window['-NICE-'].print('Failure')
+
+        else:
+            pass
+
+    elif event == 'Get posts':  # if user closes window or clicks cancel
+        inp = list(window.read())[1]
+        type = 'gp'
+        if inp[0] != ' ':
+            try:
+                data = get_post(a, inp[0], get_body=True)
+                print(data)
+                post_id = inp[0]
+                for i in data:
+                    window['-NICE-'].print(
+                        f"title: {i['title']}\npost: {i['body']}\n\n")
+            except:
+                window['-NICE-'].print('Failure')
+        else:
+            pass
+
+    elif event == WIN_CLOSED:
+        break
+
+
+window.close()

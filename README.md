@@ -16,12 +16,13 @@ A basic reddit tts video generator
 - [x] Ability to generate tts for post based subreddits (r/nosleep or r/relationships)
 - Better post/comment formatting
   - [x] Nsfw filter
-  - [ ] Converting links and emojis to plain text
 - Visual enhancements
   - [x] Slicing longer posts into to frames or jpg(s)
   - [ ] Adding the author, and upvotes
-- Wrapping it all up into a nice tkinter gui
-  - [ ] Viewing post title and clicking "yes" or "no" to create a video of it or not
+- Wrapping it all up into a nice ~~tkinter~~ pysimplegui window
+    - [x] Ability to view posts and/or the comments of the id provided
+    - [ ] Choosing arguments through a gui (dropdown, slider)
+    - [ ] Clicking a button; showing what is going on behind the scenes to the user and creating the file wherever the program is located (for now)
 
 # Usage
 
@@ -31,3 +32,4 @@ A basic reddit tts video generator
 # Backburners
 
 - Random timing issue with comments and their corresponding mp3(s)
+- Converting links and emojis to plain text
