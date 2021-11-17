@@ -1,0 +1,8 @@
+env/
+backup/
+.vscode/
+__pycache__/
+*.json
+images/
+temp/
+*.mp4
