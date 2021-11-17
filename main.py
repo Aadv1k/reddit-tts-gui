@@ -362,14 +362,12 @@ username = data['username']
 password = data['password']
 
 a = auth(client_id, client_secret, username, password)
-# Make comment video from the id
-#make_mp4_comments(a, 'qugfow', number_of_comments=1, Xcord=50, Ycord=50)
-# make_mp4_comments(
-#    a, 'askreddit', 'qv7kun', number_of_comments=10,  backdrop='alternate2.jpg', Ycord=150)
 
 """
-desktop = os.path.join(os.getcwd(), '..', 'output.mp4')
-make_mp4_comments(a, 'qv7kun', backdrop='alternate1.jpg',
-                  number_of_comments=10, output=desktop)
-
+USAGE
+make_mp4_comments(a, 'qv7kun')
+is all you need to get going, unless you removed the assets folder, in which case I would suggest you pull the repo again
 """
+
+make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=10)
+
