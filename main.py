@@ -11,6 +11,10 @@ import pyttsx3
 import os
 import random
 
+
+import markdown  # pip install markdown
+from bs4 import BeautifulSoup  # pip install beautifulsoup4
+
 import praw
 from praw.models import MoreComments
 
@@ -131,14 +135,31 @@ def wrap_text(unwrapped_text, width=80):
     # return wrapped_text
 
 
-def filter_nsfw(sentence):
-    words = [i for i in sentence.split(' ')]
+filter_list = {
+    'fuck': 'frick',
+    'fucking': 'fricking',
+    'bitch': 'female dog',
+    'shit': 'poop',
+}
+
+
+def filter_nsfw(sentence, filter_list):
+    nsfw_list = list(filter_list.keys())
+    words = [i for i in (sentence.lower()).split(' ')]
     result = ""
     for word in words:
-        if word == "is":
-            pass
+        if word in nsfw_list:
+            result += filter_list[word] + ' '
         else:
-            result += f'{word} '
+            result += word + ' '
+    return result
+
+
+# https://stackoverflow.com/questions/761824/python-how-to-convert-markdown-formatted-text-to-text
+def md_to_text(md):
+    html = markdown.markdown(md)
+    soup = BeautifulSoup(html, features='html.parser')
+    return soup.get_text()
 
 
 # MAIN
@@ -154,7 +175,7 @@ def auth(client_id, client_secret, username, password):
     )
 
 
-def make_mp4_posts(auth,  post_id, backdrop='wp.jpg', output='final.mp4', Xcord=100, Ycord=100, color=(255, 255, 255)):
+def make_mp4_posts(auth,  post_id, backdrop='wp.jpg', filter_list=filter_list, output='final.mp4', Xcord=100, Ycord=100, color=(255, 255, 255)):
     """
     A functions which created post videos; Taking a long post and slicing it into different frams; putting it all together in one video
 
@@ -196,7 +217,7 @@ def make_mp4_posts(auth,  post_id, backdrop='wp.jpg', output='final.mp4', Xcord=
     video_clips.insert(0, f'{base_temp_path}/0.mp4')
 
     # Create text which is broken down
-    unwrapped_text = body
+    unwrapped_text = md_to_text(filter_nsfw(body, filter_list))
 
     # Breaks down long texts into paras with width 1200, then its breaks down those pars into short sentences
     # FONT - VERDANA
@@ -227,7 +248,7 @@ def make_mp4_posts(auth,  post_id, backdrop='wp.jpg', output='final.mp4', Xcord=
     concatenate_video_moviepy(video_clips, output)
 
 
-def make_mp4_comments(auth, post_id, backdrop='wp.jpg', output='final.mp4', number_of_comments=10, font=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
+def make_mp4_comments(auth, post_id, backdrop='wp.jpg', output='final.mp4', number_of_comments=10, filter_list=filter_list, font=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
     """
     A function which creates a video from jpg and audio files of reddit posts with the id.
 
@@ -284,19 +305,23 @@ def make_mp4_comments(auth, post_id, backdrop='wp.jpg', output='final.mp4', numb
             concatenate_video_moviepy(video_clips, output)
             break
 
+        filtered_text = filter_nsfw(comment['body'], filter_list)
+
         # Saves mp3 of the comment to a file
-        engine.save_to_file(comment['body'], f'temp/{i}.mp3')
+        engine.save_to_file(filtered_text, f'temp/{i}.mp3')
         engine.runAndWait()
 
         # Create text which is broken down
         # base = Image.open(backdrop_image)
-        unwrapped_text = comment['body']
+        unwrapped_text = filtered_text
         wp = textwrap.TextWrapper(width=100)
         word_list = wp.wrap(unwrapped_text)
         wrapped_text = ""
         for g in word_list[:-1]:
             wrapped_text = wrapped_text + g + '\n'
         wrapped_text += word_list[-1]
+
+        wrapped_text = md_to_text(wrapped_text)
 
         # Save a jpg of the text
         create_image(wrapped_text, f'{base_image_path}/{i}.jpg', backdrop=backdrop,
@@ -339,8 +364,9 @@ a = auth(client_id, client_secret, username, password)
 desktop = os.path.join(os.getcwd(), '..', 'output.mp4')
 make_mp4_comments(a, 'qv7kun', backdrop='alternate1.jpg',
                   number_of_comments=10, output=desktop)
+
 """
 
 desktop = os.path.join(os.getcwd(), '..', 'output.mp4')
-make_mp4_comments(a, 'qv7kun', backdrop='alternate1.jpg',
-                  number_of_comments=10, output=desktop)
+make_mp4_comments(a, 'qv4oha', backdrop='alternate1.jpg',
+                  number_of_comments=10, output='out.mp4')

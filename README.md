@@ -15,7 +15,7 @@ A basic reddit tts video generator
 - [x] Migrate to praw
 - [x] Ability to generate tts for post based subreddits (r/nosleep or r/relationships)
 - Better post/comment formatting
-  - [ ] Nsfw filter
+  - [x] Nsfw filter
   - [ ] Converting links and emojis to plain text
 - Visual enhancements
   - [x] Slicing longer posts into to frames or jpg(s)
