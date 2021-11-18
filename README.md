@@ -1,6 +1,6 @@
 # Reddit text to speech generator
 
-A basic reddit tts video generator
+A basic reddit tts gui based program which generates video based on the id of the post
 
 # Current functionality
 
@@ -20,9 +20,7 @@ A basic reddit tts video generator
   - [x] Slicing longer posts into to frames or jpg(s)
   - [ ] Adding the author, and upvotes
 - Wrapping it all up into a nice ~~tkinter~~ pysimplegui window
-    - [x] Ability to view posts and/or the comments of the id provided
-    - [ ] Choosing arguments through a gui (dropdown, slider)
-    - [ ] Clicking a button; showing what is going on behind the scenes to the user and creating the file wherever the program is located (for now)
+  - [x] Implemented option for reading post or comments (with title)
 
 # Usage
 
