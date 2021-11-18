@@ -23,9 +23,8 @@ A basic reddit tts gui based program which generates video based on the id of th
   - [x] Implemented option for reading post or comments (with title)
 
 # Usage
-
-- Chug in your [app credentials](https://ssl.reddit.com/prefs/apps/) in `credentials.json`
-- do `pip install -r requirements.txt` to install all the dependencies and then, run `main.py`
+- Go to [reddit dev](https://ssl.reddit.com/prefs/apps/) to create a new app; Once the app is created copy the `client_id`, `client_secret`, `username` and reddit password to a file named `credentials.json`
+- do `pip install -r requirements.txt` to install all the dependencies and then, run `python main.py`
 
 # Backburners
 
