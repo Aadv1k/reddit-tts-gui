@@ -180,7 +180,7 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='wp.jpg', filter_d
 
     video_clips = []
     engine = pyttsx3.init()
-    title = get_title_by_id(a, post_id)
+    title = get_title_by_id(gui_auth, post_id)
 
     # Save the title image
     wrapped_title = f"posted by user {post_author} \n"
@@ -260,7 +260,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
     voices = engine.getProperty('voices')
     engine.setProperty('voice', voices[2].id)
 
-    title = get_title_by_id(a, post_id)
+    title = get_title_by_id(gui_auth, post_id)
 
     # Save the title audio
     engine.save_to_file(title, f'{base_temp_path}/0.mp3')
@@ -333,81 +333,84 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
     text_area.print(f'DONE, VIDEO AT {output}', text_color='Green')
 
 
-try:
-    with open('credentials.json') as file:
-        data = json.loads(file.read())
-except Exception as e:
-    print(e)
-    print("The file wasn't found; or the credentials weren't in the correct format")
 
-user_agent = data['user_agent']
-client_id = data['client_id']
-client_secret = data['client_secret']
-username = data['username']
-password = data['password']
-
-a = auth(client_id, client_secret, username, password)
 
 """
 USAGE
 make_mp4_comments(a, 'qv7kun')
-is all you need to get going, unless you removed the assets folder, in which case I would suggest you pull the repo again
+is all you need to get going, unless you removed the assets folder, in which case I would suggest you pull the repo 
+again
 make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 """
 
-pg = PySimpleGUI
-pg.theme('DarkBlack')
-layout = [
-    [pg.Text('Post id: '), pg.In()],
-    [pg.Text('Number of comments: '), pg.Slider(
-        orientation='h', range=(1, 50), key='-SLIDER-', size=(30, 20))],
-    [pg.Multiline(size=(60, 20), do_not_clear=False,
-                  key='-ML-', font=('Consolas', 10))],
-    [pg.Button('Get post'), pg.Button('Get comment')]
-]
-window = pg.Window('TTS SCRAPER', layout)
+def gui(gui_auth):
+    pg = PySimpleGUI
+    pg.theme('DarkBlack')
+    layout = [
+        [pg.Text('Post id: '), pg.In()],
+        [pg.Text('Number of comments: '), pg.Slider(
+            orientation='h', range=(1, 50), key='-SLIDER-', size=(30, 20))],
+        [pg.Multiline(size=(60, 20), do_not_clear=False,
+                      key='-ML-', font=('Consolas', 10))],
+        [pg.Button('Get post'), pg.Button('Get comment')]
+    ]
+    window = pg.Window('TTS SCRAPER', layout)
 
-while True:
-    event, values = window.read()
-    com_count = values['-SLIDER-']
-    if event == pg.WIN_CLOSED:
-        break
+    while True:
+        event, values = window.read()
+        com_count = values['-SLIDER-']
+        if event == pg.WIN_CLOSED:
+            break
 
-    elif event == 'Get post':
-        try:
-            item_type = 'COMMENT'
-            title = get_title_by_id(a, values[0])
-            window['-ML-'].print(
-                f'Type: Reddit comments, Title: {title}\nID: {values[0]}\nGenerating video...')
-            window['-ML-'].print(
-                'WARNING - This might take some time, Do not close the window.', text_color='Red')
+        elif event == 'Get post':
             try:
-                threading.Thread(target=make_mp4_posts, args=(
-                    a, values[0], window), daemon=True).start()
+                item_type = 'COMMENT'
+                title = get_title_by_id(gui_auth, values[0])
+                window['-ML-'].print(
+                    f'Type: Reddit comments, Title: {title}\nID: {values[0]}\nGenerating video...')
+                window['-ML-'].print(
+                    'WARNING - This might take some time, Do not close the window.', text_color='Orange')
+                try:
+                    threading.Thread(target=make_mp4_posts, args=(
+                        gui_auth, values[0], window), daemon=True).start()
+
+                except Exception as err:
+                    window['-ML-'].print(err)
 
             except Exception as err:
-                window['-ML-'].print(err)
+                window['-ML-'].print(err, text_color='Red')
 
-        except Exception as err:
-            window['-ML-'].print(err, text_color='Red')
-
-    elif event == 'Get comment':
-        try:
-            item_type = 'COMMENT'
-            title = get_title_by_id(a, values[0])
-            window['-ML-'].print(
-                f'Type: Reddit comments, Title: {title}\nID: {values[0]}\nGenerating video...')
-            window['-ML-'].print(
-                'WARNING - This might take some time, Do not close the window.', text_color='Orange')
+        elif event == 'Get comment':
             try:
-                threading.Thread(target=make_mp4_comments, args=(
-                    a, values[0], window, com_count), daemon=True).start()
+                item_type = 'COMMENT'
+                title = get_title_by_id(gui_auth, values[0])
+                window['-ML-'].print(
+                    f'Type: Reddit comments, Title: {title}\nID: {values[0]}\nGenerating video...')
+                window['-ML-'].print(
+                    'WARNING - This might take some time, Do not close the window.', text_color='Orange')
+                try:
+                    threading.Thread(target=make_mp4_comments, args=(
+                        gui_auth, values[0], window, com_count), daemon=True).start()
+
+                except Exception as err:
+                    window['-ML-'].print(err)
 
             except Exception as err:
-                window['-ML-'].print(err)
+                window['-ML-'].print(err, text_color='Red')
 
-        except Exception as err:
-            window['-ML-'].print(err, text_color='Red')
+        elif event == '-POST_END-':
+            print(values[event])
 
-    elif event == '-POST_END-':
-        print(values[event])
+try:
+    with open('credentials.json') as file:
+        data = json.loads(file.read())
+    user_agent = data['user_agent']
+    client_id = data['client_id']
+    client_secret = data['client_secret']
+    username = data['username']
+    password = data['password']
+
+    gui_auth = auth(client_id, client_secret, username, password)
+    gui(gui_auth)
+except Exception as e:
+    print("The file wasn't found; or the credentials weren't in the correct format")

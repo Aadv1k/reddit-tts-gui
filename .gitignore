@@ -6,3 +6,4 @@ __pycache__/
 images/
 temp/
 *.mp4
+.idea/
