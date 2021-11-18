@@ -1,6 +1,6 @@
 # Reddit text to speech generator
 
-A basic reddit tts video generator
+A simple script that generates reddit tts videos based on the id
 
 # Current functionality
 
@@ -25,9 +25,8 @@ A basic reddit tts video generator
     - [ ] Clicking a button; showing what is going on behind the scenes to the user and creating the file wherever the program is located (for now)
 
 # Usage
-
-- Chug in your [app credentials](https://ssl.reddit.com/prefs/apps/) in `credentials.json`
-- do `pip install -r requirements.txt` to install all the dependencies and then, run `main.py`
+- Go to [reddit dev](https://ssl.reddit.com/prefs/apps/) to create a new app; Once the app is created copy the `client_id`, `client_secret`, `username` and reddit password to a file named `credentials.json`
+- do `pip install -r requirements.txt` to install all the dependencies and then, run `python main.py`
 
 # Backburners
 
