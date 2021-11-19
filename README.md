@@ -24,7 +24,15 @@ A basic reddit tts gui based program which generates video based on the id of th
 
 # Usage
 
-- Go to [reddit dev](https://ssl.reddit.com/prefs/apps/) to create a new app; Once the app is created copy the `client_id`, `client_secret`, `username` and reddit password to a file named `credentials.json`
+- Go to [reddit dev](https://ssl.reddit.com/prefs/apps/) to create a new app; Once the app is created copy the `client_id`, `client_secret`, `username` and reddit password to a file named `credentials.json`, the file should be in the following format - 
+```json
+{
+    "client_id": "SI8pN3DSbt0zor",
+    "client_secret": "xaxkj7HNh8kwg8e5t4m6KvSrbTI",
+    "username": "fakebot3",
+    "password": "1guiwevlfo00esyy"
+}
+```
 - do `pip install -r requirements.txt` to install all the dependencies and then, run `python main.py`
 
 # Backburners
