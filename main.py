@@ -1,12 +1,6 @@
-from math import trunc
 import threading
 import PySimpleGUI
-from re import sub
-import tkinter as tk
 from tkinter import *
-from tkinter import font
-from types import WrapperDescriptorType
-from PIL.ImageColor import colormap
 import moviepy
 from moviepy.editor import AudioFileClip, ImageClip, TextClip, CompositeVideoClip, VideoFileClip
 from moviepy.editor import *
@@ -17,7 +11,6 @@ from PIL import Image, ImageFont, ImageDraw
 import json
 import pyttsx3
 import os
-import random
 
 import praw
 from praw.models import MoreComments
@@ -125,14 +118,18 @@ filter_list = {
     'fucking': 'fricking',
     'bitch': 'female dog',
     'shit': 'poop',
-    'NTA': 'not the ahole',
     'nta': 'not the ahole',
+    'aita': 'am I the ahole',
+    'wibta': 'Would I be the ahole',
 }
 
 
 def filter_nsfw(sentence, filter_list):
     nsfw_list = list(filter_list.keys())
-    words = [i for i in (sentence.lower()).split(' ')]
+    sentence = sentence.split('\n')
+    split_sentence = " ".join(sentence)
+
+    words = [i for i in (split_sentence.lower().split(' '))]
     result = ""
     for word in words:
         if word in nsfw_list:
@@ -140,6 +137,12 @@ def filter_nsfw(sentence, filter_list):
         else:
             result += word + ' '
     return result
+
+
+sent = """posted by user jigglyjigglyjig
+WIBTA if i have a mom’s wheelchair accessible van towed?"""
+
+filter_nsfw(sent, filter_list)
 
 
 # https://stackoverflow.com/questions/761824/python-how-to-convert-markdown-formatted-text-to-text
@@ -155,7 +158,8 @@ def auth(client_id, client_secret, username, password):
     )
 
 
-def make_mp4_posts(praw_auth, post_id, event_window, backdrop='wp.jpg', filter_dict=filter_list, output='final.mp4',
+def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', filter_dict=filter_list,
+                   output='final.mp4',
                    Xcord=100, Ycord=100,
                    color=(255, 255, 255)):
     """
@@ -187,8 +191,11 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='wp.jpg', filter_d
     for words in wrap_text(title, width=90):
         wrapped_title += words + '\n'
 
+    print(wrapped_title)
+    filtered_title = filter_nsfw(wrapped_title, filter_dict)
+    print(filtered_title)
     # Save the title
-    engine.save_to_file(wrapped_title, f'{base_temp_path}/0.mp3')
+    engine.save_to_file(filtered_title, f'{base_temp_path}/0.mp3')
     engine.runAndWait()
 
     create_image(wrapped_title, f'{base_image_path}/0.jpg', backdrop=backdrop,
@@ -216,7 +223,7 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='wp.jpg', filter_d
         for sentences in paragraphs:
             st += sentences + '\n'
 
-        engine.save_to_file(st, f'{base_temp_path}/{i}.mp3')
+        engine.save_to_file(filter_nsfw(st, filter_dict), f'{base_temp_path}/{i}.mp3')
         engine.runAndWait()
 
         create_image(st, f'{base_image_path}/{i}.jpg', backdrop=backdrop,
@@ -333,8 +340,6 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
     text_area.print(f'DONE, VIDEO AT {output}', text_color='Green')
 
 
-
-
 """
 USAGE
 make_mp4_comments(a, 'qv7kun')
@@ -342,6 +347,7 @@ is all you need to get going, unless you removed the assets folder, in which cas
 again
 make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 """
+
 
 def gui(gui_auth):
     pg = PySimpleGUI
@@ -401,10 +407,10 @@ def gui(gui_auth):
         elif event == '-POST_END-':
             print(values[event])
 
+
 try:
     with open('credentials.json') as file:
         data = json.loads(file.read())
-    user_agent = data['user_agent']
     client_id = data['client_id']
     client_secret = data['client_secret']
     username = data['username']
