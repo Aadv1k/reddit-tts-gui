@@ -1,6 +1,6 @@
 # Reddit text to speech generator
 
-A basic reddit tts gui based program which generates video based on the id of the post
+A python gui program to generate reddit text to speech videos from the id of any post.
 
 # Current functionality
 
@@ -18,7 +18,6 @@ A basic reddit tts gui based program which generates video based on the id of th
   - [x] Nsfw filter
 - Visual enhancements
   - [x] Slicing longer posts into to frames or jpg(s)
-  - [ ] Adding the author, and upvotes
 - Wrapping it all up into a nice ~~tkinter~~ pysimplegui window
   - [x] Implemented option for reading post or comments (with title)
 

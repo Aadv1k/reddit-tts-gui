@@ -1,9 +1,7 @@
 import threading
 import PySimpleGUI
-from tkinter import *
 import moviepy
-from moviepy.editor import AudioFileClip, ImageClip, TextClip, CompositeVideoClip, VideoFileClip
-from moviepy.editor import *
+from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip
 import textwrap
 
 from PIL import Image, ImageFont, ImageDraw
@@ -184,6 +182,9 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', 
 
     video_clips = []
     engine = pyttsx3.init()
+    voices = engine.getProperty('voices')
+    engine.setProperty('rate', 175)
+    engine.setProperty('voice', voices[1].id)
     title = get_title_by_id(gui_auth, post_id)
 
     # Save the title image
@@ -191,7 +192,6 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', 
     for words in wrap_text(title, width=90):
         wrapped_title += words + '\n'
 
-    print(wrapped_title)
     filtered_title = filter_nsfw(wrapped_title, filter_dict)
     print(filtered_title)
     # Save the title
@@ -223,7 +223,8 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', 
         for sentences in paragraphs:
             st += sentences + '\n'
 
-        engine.save_to_file(filter_nsfw(st, filter_dict), f'{base_temp_path}/{i}.mp3')
+        engine.save_to_file(filter_nsfw(st, filter_dict),
+                            f'{base_temp_path}/{i}.mp3')
         engine.runAndWait()
 
         create_image(st, f'{base_image_path}/{i}.jpg', backdrop=backdrop,
@@ -265,8 +266,8 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
     video_clips = []
     engine = pyttsx3.init()
     voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[2].id)
-
+    engine.setProperty('rate', 175)
+    engine.setProperty('voice', voices[1].id)
     title = get_title_by_id(gui_auth, post_id)
 
     # Save the title audio
@@ -275,10 +276,14 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
 
     # Save the title image
     wrapped_title = ""
-    # wrap long texts
     for words in wrap_text(title, width=90):
         wrapped_title += words + '\n'
-    create_image(wrapped_title, f'{base_temp_path}/0.jpg', backdrop=backdrop,
+
+    filtered_title = filter_nsfw(wrapped_title, filter_dict)
+    engine.save_to_file(filtered_title, f'{base_temp_path}/0.mp3')
+    engine.runAndWait()
+
+    create_image(filtered_title, f'{base_temp_path}/0.jpg', backdrop=backdrop,
                  Xcord=Xcord, Ycord=Ycord, color=color, font=font_size)
 
     audio_clip = AudioFileClip(f'{base_temp_path}/0.mp3')
@@ -351,7 +356,7 @@ make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 
 def gui(gui_auth):
     pg = PySimpleGUI
-    pg.theme('DarkBlack')
+    pg.theme('DarkAmber')
     layout = [
         [pg.Text('Post id: '), pg.In()],
         [pg.Text('Number of comments: '), pg.Slider(
