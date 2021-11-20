@@ -1,4 +1,5 @@
 import threading
+from tkinter.constants import BROWSE
 import PySimpleGUI
 import moviepy
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip
@@ -156,8 +157,7 @@ def auth(client_id, client_secret, username, password):
     )
 
 
-def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', filter_dict=filter_list,
-                   output='final.mp4',
+def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', backdrop='alternate1.jpg', filter_dict=filter_list,
                    Xcord=100, Ycord=100,
                    color=(255, 255, 255)):
     """
@@ -181,9 +181,10 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', 
     base_temp_path = 'temp'
 
     video_clips = []
+    # TODO change settings for mape_mp4_comments too
     engine = pyttsx3.init()
     voices = engine.getProperty('voices')
-    engine.setProperty('rate', 175)
+    engine.setProperty('rate', 167)
     engine.setProperty('voice', voices[1].id)
     title = get_title_by_id(gui_auth, post_id)
 
@@ -205,7 +206,7 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', 
         f'{base_temp_path}/0.mp3', f'{base_image_path}/0.jpg', f'{base_temp_path}/0.mp4')
     os.remove(f'{base_temp_path}/0.mp3')
     video_clips.insert(0, f'{base_temp_path}/0.mp4')
-    text_area.print('Created 0.mp4')
+    text_area.print(f'Created 0.mp4, at {base_temp_path}')
 
     # Create text which is broken down
     unwrapped_text = filter_nsfw(body, filter_dict)
@@ -242,7 +243,7 @@ def make_mp4_posts(praw_auth, post_id, event_window, backdrop='alternate1.jpg', 
 
     text_area.print(f'Combining clips...')
     concatenate_video_moviepy(video_clips, output)
-    text_area.print(f'DONE, VIDEO AT {output}', text_color='Green')
+    text_area.print(f'DONE, VIDEO AT {output}', text_color='Orange')
 
 
 def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdrop='wp.jpg', output='final.mp4',
@@ -361,6 +362,8 @@ def gui(gui_auth):
         [pg.Text('Post id: '), pg.In()],
         [pg.Text('Number of comments: '), pg.Slider(
             orientation='h', range=(1, 50), key='-SLIDER-', size=(30, 20))],
+        [pg.Text('Output path: '), pg.In(size=(40, 10), key='-PATH_IN-'),
+         pg.FolderBrowse(button_text='browse', key='-FB-', initial_folder='.')],
         [pg.Multiline(size=(60, 20), do_not_clear=False,
                       key='-ML-', font=('Consolas', 10))],
         [pg.Button('Get post'), pg.Button('Get comment')]
@@ -370,6 +373,7 @@ def gui(gui_auth):
     while True:
         event, values = window.read()
         com_count = values['-SLIDER-']
+        out_path = os.path.join(values['-PATH_IN-'], 'output.mp4')
         if event == pg.WIN_CLOSED:
             break
 
@@ -383,7 +387,7 @@ def gui(gui_auth):
                     'WARNING - This might take some time, Do not close the window.', text_color='Orange')
                 try:
                     threading.Thread(target=make_mp4_posts, args=(
-                        gui_auth, values[0], window), daemon=True).start()
+                        gui_auth, values[0], window, out_path), daemon=True).start()
 
                 except Exception as err:
                     window['-ML-'].print(err)
