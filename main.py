@@ -1,5 +1,4 @@
 import threading
-from tkinter.constants import BROWSE
 import PySimpleGUI
 import moviepy
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip

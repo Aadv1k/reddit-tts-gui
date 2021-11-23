@@ -1,6 +1,7 @@
 # Reddit text to speech generator
 
 A python gui program to generate reddit text to speech videos from the id of any post.
+**This project is complete as of now, feel free to suggest a feature or a bug via issues**
 
 # Current functionality
 
@@ -37,10 +38,10 @@ A python gui program to generate reddit text to speech videos from the id of any
 - do `pip install -r requirements.txt` to install all the dependencies and then, run `python main.py`
 
 # Screenshots
+
 <img src='screenshots/1.jpg' width=300px>
 <img src='screenshots/2.jpg' width=300px >
 
 # Backburners
 
-- Random timing issue with comments and their corresponding mp3(s)
 - Converting links and emojis to plain text
