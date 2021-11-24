@@ -3,6 +3,7 @@ import PySimpleGUI
 import moviepy
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip
 import textwrap
+import codeflow as cf
 
 from PIL import Image, ImageFont, ImageDraw
 
@@ -137,22 +138,16 @@ def filter_nsfw(sentence, filter_list):
     return result
 
 
-sent = """posted by user jigglyjigglyjig
-WIBTA if i have a mom’s wheelchair accessible van towed?"""
-
-filter_nsfw(sent, filter_list)
-
-
 # https://stackoverflow.com/questions/761824/python-how-to-convert-markdown-formatted-text-to-text
 # MAIN
 
-def auth(client_id, client_secret, username, password):
+def auth():
+    print(cf.auth()['token'])
     return praw.Reddit(
-        user_agent="Comment Extraction (by u/USERNAME)",
-        client_id=client_id,
-        client_secret=client_secret,
-        username=username,
-        password=password,
+        client_id="LYQy5q5ICwT-QaTY2hcCow",
+        client_secret="uvk6k7CGGgVIRqg40AfGlB_EC0FOtQ",
+        refresh_token=cf.auth()['token'],
+        user_agent="testscript by u/fakebot3",
     )
 
 
@@ -185,7 +180,7 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', backdro
     voices = engine.getProperty('voices')
     engine.setProperty('rate', 167)
     engine.setProperty('voice', voices[1].id)
-    title = get_title_by_id(gui_auth, post_id)
+    title = get_title_by_id(praw_auth, post_id)
 
     # Save the title image
     wrapped_title = f"posted by user {post_author} \n"
@@ -268,7 +263,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
     voices = engine.getProperty('voices')
     engine.setProperty('rate', 175)
     engine.setProperty('voice', voices[1].id)
-    title = get_title_by_id(gui_auth, post_id)
+    title = get_title_by_id(praw_auth, post_id)
 
     # Save the title audio
     engine.save_to_file(title, f'{base_temp_path}/0.mp3')
@@ -416,15 +411,4 @@ def gui(gui_auth):
             print(values[event])
 
 
-try:
-    with open('credentials.json') as file:
-        data = json.loads(file.read())
-    client_id = data['client_id']
-    client_secret = data['client_secret']
-    username = data['username']
-    password = data['password']
-
-    gui_auth = auth(client_id, client_secret, username, password)
-    gui(gui_auth)
-except Exception as e:
-    print("The file wasn't found; or the credentials weren't in the correct format")
+gui(auth())
