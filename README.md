@@ -10,6 +10,8 @@ A python gui program to generate reddit text to speech videos from the id of any
 
 # Todo
 
+**Feel free to suggest any feature or bug via comments or issues**
+
 - [x] Get comments based on the permalink
 - [x] Generate mp3 and jpg of the post and its comments; concatenate both of them for a clip, them combine all the clip into one file
 - [x] Migrate to praw
@@ -22,8 +24,7 @@ A python gui program to generate reddit text to speech videos from the id of any
   - [x] Implemented option for reading post or comments (with title)
   - [x] Output folder selection
   - [x] Voice selection
-  - [ ] Some clean ups and error handling
-  - [ ] More features (suggest some via issues or comments!)
+  - [x] Some clean ups and error handling
 
 # Usage
 
@@ -32,7 +33,7 @@ A python gui program to generate reddit text to speech videos from the id of any
 
 # Screenshots
 
- <img src='screenshots/1.1.jpg' width=300px> <img src='screenshots/2.1.png' width=300px> 
+<img src='screenshots/1.1.jpg' width=300px> <img src='screenshots/2.1.png' width=300px>
 
 # Backburners
 
