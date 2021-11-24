@@ -4,11 +4,10 @@ A python gui program to generate reddit text to speech videos from the id of any
 
 # Current functionality
 
-- Generate videos for subs based on comments,(askreddit) so reading individual comments
+- Generate videos for subs based on comments,(askreddit) so reading individual comments.
 - Generate videos for subs with longer posts,(entitledparents), so slicing the post into multiple frames to fit the text.
-- Easy login, all you need to do, is run `main.py`, you will get a link; go to the link and click allow; Thats it! the credentials are written to a json file so 
+- Easy login, all you need to do, is run `main.py`, you will get a link; go to the link and click allow; Thats it! the credentials are written to a json file so you dont need to repeat this step as long as the `token.json` file is there.
 - Optional customizability options to change the font, backdrop, position of text on the screen
-you dont need to repeat this step as long as the file is there.
 # Todo
 
 **Feel free to suggest any feature or bug via comments or issues**
