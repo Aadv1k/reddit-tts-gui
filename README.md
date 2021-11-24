@@ -32,8 +32,7 @@ A python gui program to generate reddit text to speech videos from the id of any
 
 # Screenshots
 
-<img src='screenshots/1.jpg' width=300px>
-<img src='screenshots/2.jpg' width=300px >
+ <img src='screenshots/1.1.jpg' width=300px> <img src='screenshots/2.1.png' width=300px> 
 
 # Backburners
 
