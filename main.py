@@ -351,7 +351,7 @@ make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 
 def gui(gui_auth):
     pg = PySimpleGUI
-    pg.theme('DarkAmber')
+    pg.theme('DarkBrown1')
     layout = [
         [pg.Text('Post id: '), pg.In()],
         [pg.Text('Number of comments: '), pg.Slider(
@@ -368,6 +368,7 @@ def gui(gui_auth):
         event, values = window.read()
         com_count = values['-SLIDER-']
         out_path = os.path.join(values['-PATH_IN-'], 'output.mp4')
+
         if event == pg.WIN_CLOSED:
             break
 
