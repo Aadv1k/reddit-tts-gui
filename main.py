@@ -151,7 +151,7 @@ def auth():
     )
 
 
-def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', backdrop='alternate1.jpg', filter_dict=filter_list,
+def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_id=1, backdrop='alternate1.jpg', filter_dict=filter_list,
                    Xcord=100, Ycord=100,
                    color=(255, 255, 255)):
     """
@@ -178,8 +178,8 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', backdro
     # TODO change settings for mape_mp4_comments too
     engine = pyttsx3.init()
     voices = engine.getProperty('voices')
-    engine.setProperty('rate', 167)
-    engine.setProperty('voice', voices[1].id)
+    engine.setProperty('rate', 170)
+    engine.setProperty('voice', voices[voice_id].id)
     title = get_title_by_id(praw_auth, post_id)
 
     # Save the title image
@@ -208,12 +208,12 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', backdro
     # Breaks down long texts into paras with width 1200, then its breaks down those pars into short sentences
     # FONT - VERDANA
     # SIZE - 35
-    # Main text width (defines how long text in the picture will be) = 2000
-    # Sentence width (defines how wide sentences will be) = 110
+    # Main text width (defines the length of the text in the picture) = 2000
+    # Sentence width (defines the width of the sentence) = 110
     wrapped_text = wrap_text(unwrapped_text, width=2200)
     i = 1
     for paragraphs in wrapped_text:
-        paragraphs = wrap_text(f'{paragraphs}', width=110)
+        paragraphs = wrap_text(f'{paragraphs}', width=120)
         st = ""
         for sentences in paragraphs:
             st += sentences + '\n'
@@ -240,7 +240,7 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', backdro
     text_area.print(f'DONE, VIDEO AT {output}', text_color='Orange')
 
 
-def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdrop='wp.jpg', output='final.mp4',
+def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1, backdrop='wp.jpg', output='final.mp4',
                       filter_dict=filter_list, font_size=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
     """
     A function which creates a video from jpg and audio files of reddit posts with the id.
@@ -262,7 +262,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
     engine = pyttsx3.init()
     voices = engine.getProperty('voices')
     engine.setProperty('rate', 175)
-    engine.setProperty('voice', voices[1].id)
+    engine.setProperty('voice', voices[voice].id)
     title = get_title_by_id(praw_auth, post_id)
 
     # Save the title audio
@@ -343,24 +343,53 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, backdro
 """
 USAGE
 make_mp4_comments(a, 'qv7kun')
-is all you need to get going, unless you removed the assets folder, in which case I would suggest you pull the repo 
+is all you need to get going, unless you removed the assets folder, in which case I would suggest you pull the repo
 again
 make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 """
 
 
 def gui(gui_auth):
+    engine = pyttsx3.init()
+    voice_names = []
+    for voice_properties in engine.getProperty('voices'):
+        voice_names.append(voice_properties.name)
     pg = PySimpleGUI
-    pg.theme('DarkBrown1')
+    pg.theme('DarkAmber')
     layout = [
-        [pg.Text('Post id: '), pg.In()],
-        [pg.Text('Number of comments: '), pg.Slider(
-            orientation='h', range=(1, 50), key='-SLIDER-', size=(30, 20))],
-        [pg.Text('Output path: '), pg.In(size=(40, 10), key='-PATH_IN-'),
-         pg.FolderBrowse(button_text='browse', key='-FB-', initial_folder='.')],
-        [pg.Multiline(size=(60, 20), do_not_clear=False,
-                      key='-ML-', font=('Consolas', 10))],
-        [pg.Button('Get post'), pg.Button('Get comment')]
+        [
+            pg.Text('Post id: '),
+            pg.In()
+        ],
+
+        [
+            pg.Text('Number of comments: '),
+            pg.Slider(orientation='h', range=(1, 50),
+                      key='-SLIDER-', size=(30, 20))
+        ],
+
+        [
+            pg.Text('Output path: '), pg.In(size=(40, 10), key='-PATH_IN-'),
+            pg.FolderBrowse(button_text='browse',
+                            key='-FB-', initial_folder='.')
+        ],
+
+        [
+            pg.Text('Voice: '),
+            pg.Combo(voice_names, default_value='Microsoft Hazel Desktop - English (Great Britain)',
+                     size=(40, 20), key='-VOICE_LIST-')
+        ],
+
+        [
+            pg.Multiline(size=(60, 20), do_not_clear=False,
+                         key='-ML-', font=('Consolas', 10))
+        ],
+
+
+        [
+            pg.Button('Get post'),
+            pg.Button('Get comment')
+        ]
     ]
     window = pg.Window('TTS SCRAPER', layout)
 
@@ -368,21 +397,24 @@ def gui(gui_auth):
         event, values = window.read()
         com_count = values['-SLIDER-']
         out_path = os.path.join(values['-PATH_IN-'], 'output.mp4')
+        try:
+            voice_id = voice_names.index(values['-VOICE_LIST-'])
+        except ValueError:
+            voice_id = 1
 
         if event == pg.WIN_CLOSED:
             break
 
         elif event == 'Get post':
             try:
-                item_type = 'COMMENT'
                 title = get_title_by_id(gui_auth, values[0])
                 window['-ML-'].print(
-                    f'Type: Reddit comments, Title: {title}\nID: {values[0]}\nGenerating video...')
+                    f'Type: Reddit post\nTitle: {title}\nID: {values[0]}\nVoice: {voice_names[voice_id]}\nGenerating video...')
                 window['-ML-'].print(
                     'WARNING - This might take some time, Do not close the window.', text_color='Orange')
                 try:
                     threading.Thread(target=make_mp4_posts, args=(
-                        gui_auth, values[0], window, out_path), daemon=True).start()
+                        gui_auth, values[0], window, out_path, voice_id), daemon=True).start()
 
                 except Exception as err:
                     window['-ML-'].print(err)
@@ -392,7 +424,6 @@ def gui(gui_auth):
 
         elif event == 'Get comment':
             try:
-                item_type = 'COMMENT'
                 title = get_title_by_id(gui_auth, values[0])
                 window['-ML-'].print(
                     f'Type: Reddit comments, Title: {title}\nID: {values[0]}\nGenerating video...')
@@ -400,7 +431,7 @@ def gui(gui_auth):
                     'WARNING - This might take some time, Do not close the window.', text_color='Orange')
                 try:
                     threading.Thread(target=make_mp4_comments, args=(
-                        gui_auth, values[0], window, com_count), daemon=True).start()
+                        gui_auth, values[0], window, com_count, voice_id), daemon=True).start()
 
                 except Exception as err:
                     window['-ML-'].print(err)

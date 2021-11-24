@@ -20,6 +20,8 @@ A python gui program to generate reddit text to speech videos from the id of any
   - [x] Slicing longer posts into to frames or jpg(s)
 - Wrapping it all up into a nice ~~tkinter~~ pysimplegui window
   - [x] Implemented option for reading post or comments (with title)
+  - [x] Output folder selection
+  - [x] Voice selection
   - [ ] Some clean ups and error handling
   - [ ] More features (suggest some via issues or comments!)
 
