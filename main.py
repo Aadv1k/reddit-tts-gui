@@ -7,6 +7,7 @@ import codeflow as cf
 
 from PIL import Image, ImageFont, ImageDraw
 
+import json
 import pyttsx3
 import os
 
@@ -14,11 +15,11 @@ import praw
 from praw.models import MoreComments
 
 
-# Helper functions
+# HELPER FUNCTIONS
 def get_post(auth, post_id):
     reddit = auth
-    submission = reddit.submission(post_id)
 
+    submission = reddit.submission(post_id)
     return {
         'title': submission.title,
         'body': submission.selftext,
@@ -47,8 +48,12 @@ def get_comment(auth, post_id):
 
 def get_title_by_id(auth, post_id):
     reddit = auth
+    data = []
     submission = reddit.submission(id=post_id)
-    return submission.title
+    return {
+        'title': submission.title,
+        'ups': submission.ups,
+    }
 
 
 def concatenate_video_moviepy(videos, out):
@@ -58,10 +63,14 @@ def concatenate_video_moviepy(videos, out):
 
 
 def check_folders():
-    if os.path.isdir('temp/'):
+    if os.path.isdir('temp/') and os.path.isdir('images/'):
         pass
     else:
-        os.mkdir('temp')
+        try:
+            os.mkdir('temp')
+            os.mkdir('images')
+        except FileExistsError:
+            pass
 
 
 def create_image(text, output_path, backdrop='wp.jpg', font=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
@@ -113,7 +122,8 @@ def filter_nsfw(sentence, filter_list):
     return result
 
 
-# Main code
+# https://stackoverflow.com/questions/761824/python-how-to-convert-markdown-formatted-text-to-text
+# MAIN
 
 def auth():
     print(cf.auth()['token'])
@@ -126,16 +136,15 @@ def auth():
 
 
 def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_id=1, backdrop='alternate1.jpg', filter_dict=filter_list,
-                   Xcord=100, Ycord=100, color=(255, 255, 255)):
-    """A functions which created post videos; Taking a long post and slicing it
-    into different frams; putting it all together in one video.
+                   Xcord=100, Ycord=100,
+                   color=(255, 255, 255)):
+    """
+    A functions which created post videos; Taking a long post and slicing it into different frams; putting it all together in one video
 
-    - praw_auth: a praw auth object
+    - auth: a praw auth object
     - post_id: id of the post
-    - event_window: The window object, which is used to send messages to the gui console
-    - output: output file path with name
-    - voice_id: The index `1` out of 3 voices (including 0)
     - backdrop: looks for the backdrop image in assets/
+    - output: output file path with name
     - Xcord, Ycord: specifies where the text should be located in the string.
     - color: Color in the rgb format as a tuple
     """
@@ -146,35 +155,38 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_i
     post_author = post['author']
 
     check_folders()
+    base_image_path = 'temp'
     base_temp_path = 'temp'
-    video_clips = []
 
+    video_clips = []
+    # TODO change settings for mape_mp4_comments too
     engine = pyttsx3.init()
     voices = engine.getProperty('voices')
     engine.setProperty('rate', 170)
     engine.setProperty('voice', voices[voice_id].id)
-    title = get_title_by_id(praw_auth, post_id)
+    title = get_title_by_id(praw_auth, post_id)['title']
 
-    # Create the title image, mp3, and combine them
+    # Save the title image
     wrapped_title = f"posted by user {post_author} \n"
     for words in wrap_text(title, width=90):
         wrapped_title += words + '\n'
 
     filtered_title = filter_nsfw(wrapped_title, filter_dict)
+    print(filtered_title)
+    # Save the title
     engine.save_to_file(filtered_title, f'{base_temp_path}/0.mp3')
     engine.runAndWait()
 
-    create_image(wrapped_title, f'{base_temp_path}/0.jpg',
-                 backdrop=backdrop, Xcord=Xcord, Ycord=Ycord, color=color)
+    create_image(wrapped_title, f'{base_image_path}/0.jpg', backdrop=backdrop,
+                 Xcord=Xcord, Ycord=Ycord, color=color)
 
     create_video_from_audio(
-        f'{base_temp_path}/0.mp3', f'{base_temp_path}/0.jpg', f'{base_temp_path}/0.mp4')
+        f'{base_temp_path}/0.mp3', f'{base_image_path}/0.jpg', f'{base_temp_path}/0.mp4')
     os.remove(f'{base_temp_path}/0.mp3')
     video_clips.insert(0, f'{base_temp_path}/0.mp4')
+    text_area.print(f'Created 0.mp4, at {base_temp_path}')
 
-    text_area.print(f'Created 0.mp4 at {base_temp_path}/')
-
-    # Filter the post body
+    # Create text which is broken down
     unwrapped_text = filter_nsfw(body, filter_dict)
 
     # Breaks down long texts into paras with width 1200, then its breaks down those pars into short sentences
@@ -194,14 +206,14 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_i
                             f'{base_temp_path}/{i}.mp3')
         engine.runAndWait()
 
-        create_image(st, f'{base_temp_path}/{i}.jpg', backdrop=backdrop,
+        create_image(st, f'{base_image_path}/{i}.jpg', backdrop=backdrop,
                      Xcord=Xcord, Ycord=Ycord, color=color)
 
         create_video_from_audio(
-            f'{base_temp_path}/{i}.mp3', f'{base_temp_path}/{i}.jpg', f'{base_temp_path}/{i}.mp4')
+            f'{base_temp_path}/{i}.mp3', f'{base_image_path}/{i}.jpg', f'{base_temp_path}/{i}.mp4')
 
         video_clips.append(f'{base_temp_path}/{i}.mp4')
-        text_area.print(f'Created {i}.mp4 at {base_temp_path}/')
+        text_area.print(f'Created {i}.mp4 at {base_temp_path}')
         os.remove(f'{base_temp_path}/{i}.mp3')
         os.remove(f'{base_temp_path}/{i}.jpg')
 
@@ -209,19 +221,19 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_i
 
     text_area.print(f'Combining clips...')
     concatenate_video_moviepy(video_clips, output)
-    text_area.print(f'Done, video at {output}', text_color='Orange')
+    text_area.print(f'DONE, VIDEO AT {output}', text_color='Orange')
 
 
-def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1, backdrop='alternate1.jpg', output='output.mp4',
+def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1, output='final.mp4', backdrop='wp.jpg',
                       filter_dict=filter_list, font_size=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
-    """A function which creates a video from jpg and audio files of reddit
-    posts with the id.
+    """
+    A function which creates a video from jpg and audio files of reddit posts with the id.
 
     - auth: a praw instance, can be created by passing in credentials to the auth function
     - post_id: The id of the post; example - qvcxdt
-    - number_of_comments: Number of comments to be scraped
     - backdrop: Looks for the image in assets/
     - output: path (with name) of the output file
+    - number_of_comments: Number of comments to be scraped
     - font: Font size
     - Xcord, Ycord: Define the position of the text on the image
     - color: Color of the text
@@ -235,7 +247,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
     voices = engine.getProperty('voices')
     engine.setProperty('rate', 175)
     engine.setProperty('voice', voices[voice].id)
-    title = get_title_by_id(praw_auth, post_id)
+    title = get_title_by_id(praw_auth, post_id)['title']
 
     # Save the title audio
     engine.save_to_file(title, f'{base_temp_path}/0.mp3')
@@ -253,13 +265,16 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
     create_image(filtered_title, f'{base_temp_path}/0.jpg', backdrop=backdrop,
                  Xcord=Xcord, Ycord=Ycord, color=color, font=font_size)
 
-    create_video_from_audio(
-        f'{base_temp_path}/0.mp3', f'{base_temp_path}/0.jpg', f'{base_temp_path}/0.mp4'
-    )
-
+    audio_clip = AudioFileClip(f'{base_temp_path}/0.mp3')
+    image_clip = ImageClip(f'{base_temp_path}/0.jpg')
+    video_clip = image_clip.set_audio(audio_clip)
+    video_clip.duration = audio_clip.duration
+    video_clip.fps = 1
+    video_clip.write_videofile(f'{base_temp_path}/0.mp4')
     os.remove(f'{base_temp_path}/0.mp3')
+    os.remove(f'{base_temp_path}/0.jpg')
     video_clips.insert(0, f'{base_temp_path}/0.mp4')
-    text_area.print(f'Created 0.mp4 at {base_temp_path}/')
+    text_area.print(f'Saved 0.mp4 at {base_temp_path}/')
     comments = get_comment(praw_auth, post_id)
 
     i = 1
@@ -267,7 +282,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
         try:
             comment = comments[i]
         except IndexError:
-            text_area.print(f'Only {i} comments were found; stopping.')
+            print(f'Only {i} comments were found; stopping.')
             concatenate_video_moviepy(video_clips, output)
             break
 
@@ -290,15 +305,15 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
         create_image(wrapped_text, f'{base_temp_path}/{i}.jpg', backdrop=backdrop,
                      Xcord=Xcord, Ycord=Ycord, color=color, font=font_size)
 
-        # TODO USE THE HELPER FUNCTIONS TO GET RID OF THIS BLOCK OF CODE
         # Combine image and audio
-
-        create_video_from_audio(
-            f'{base_temp_path}/{i}.mp3', f'{base_temp_path}/{i}.jpg', f'{base_temp_path}/{i}.mp4')
-
+        audio_clip = AudioFileClip(f'{base_temp_path}/{i}.mp3')
+        image_clip = ImageClip(f'{base_temp_path}/{i}.jpg')
+        video_clip = image_clip.set_audio(audio_clip)
+        video_clip.duration = audio_clip.duration
+        video_clip.fps = 1
+        video_clip.write_videofile(f'{base_temp_path}/{i}.mp4')
+        text_area.print(f'Saved {i}.mp4 at {base_temp_path}/')
         video_clips.append(f'{base_temp_path}/{i}.mp4')
-        text_area.print(f'Created {i}.mp4 at {base_temp_path}/')
-
         os.remove(f'{base_temp_path}/{i}.mp3')
         os.remove(f'{base_temp_path}/{i}.jpg')
 
@@ -306,7 +321,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
 
     text_area.print(f'Combining clips...')
     concatenate_video_moviepy(video_clips, output)
-    text_area.print(f'DONE, VIDEO AT {output}', text_color='Orange')
+    text_area.print(f'DONE, VIDEO AT {output}', text_color='Green')
 
 
 """
@@ -318,53 +333,88 @@ make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 """
 
 
+def get_ids(auth, sub, window=''):
+    reddit = auth
+    ids = []
+    for submission in reddit.subreddit(sub).hot(limit=25):
+        ids.append(submission.id)
+
+    return ids
+
+
 def gui(gui_auth):
     engine = pyttsx3.init()
     voice_names = []
     for voice_properties in engine.getProperty('voices'):
         voice_names.append(voice_properties.name)
-
     pg = PySimpleGUI
     pg.theme('DarkAmber')
-    layout = [
+
+    post_selection = [
         [
-            pg.Text('Post id: '),
-            pg.In()
-        ],
-        [
-            pg.Text('Number of comments: '),
-            pg.Slider(orientation='h', range=(1, 50),
-                      key='-SLIDER-', size=(30, 20))
-        ],
-        [
-            pg.Text('Output path: '), pg.In(size=(40, 10), key='-PATH_IN-'),
-            pg.FolderBrowse(button_text='browse',
-                            key='-FB-', initial_folder='.')
-        ],
-        [
-            pg.Text('Voice: '),
-            pg.Combo(voice_names, default_value='Microsoft Hazel Desktop - English (Great Britain)',
-                     size=(40, 20), key='-VOICE_LIST-')
-        ],
-        [
-            pg.Multiline(size=(60, 20), do_not_clear=False,
-                         key='-ML-', font=('Consolas', 10))
+            pg.Text('Subreddit: '),
+            pg.In(key='-SUBREDDIT-'),
+            pg.Button('GO')
         ],
 
         [
+            pg.Listbox(values=[], size=(60, 15),
+                       key='-ID-', enable_events=True),
+        ],
+
+        [
+            pg.Button('Select Id')
+        ]
+
+    ]
+
+    video_options = [
+
+        [pg.Frame('Post Selection', post_selection)],
+        [pg.Frame('Video options', [
+            [
+                pg.Text('Number of comments: '),
+                pg.Slider(orientation='h', range=(1, 50),
+                          key='-SLIDER-', size=(30, 20))
+            ],
+
+            [
+                pg.Text('Output path: '), pg.In(
+                    size=(40, 10), key='-PATH_IN-'),
+                pg.FolderBrowse(button_text='browse',
+                                key='-FB-', initial_folder='.')
+            ],
+
+            [
+                pg.Text('Voice: '),
+                pg.Combo(voice_names, default_value='Microsoft Hazel Desktop - English (Great Britain)',
+                         size=(40, 20), key='-VOICE_LIST-')
+            ],
+        ])],
+
+    ]
+
+    frame = [
+        [pg.Frame('Post information', [[pg.Multiline(size=(40, 10), do_not_clear=True,
+                                                     key='-SL-', font=('Consolas', 12))]])],
+
+        [pg.Frame('Video status', [[pg.Multiline(size=(40, 10), do_not_clear=True,
+                                                 key='-ML-', font=('Consolas', 11))]])],
+
+        [pg.Frame('Buttons', [[
             pg.Button('Get post'),
             pg.Button('Get comment')
-        ]
+        ]])]
     ]
+
+    layout = [[pg.Column(video_options), pg.Column(frame)]]
+
     window = pg.Window('TTS SCRAPER', layout)
 
     while True:
         event, values = window.read()
         com_count = values['-SLIDER-']
-        # Adding to handle the 0 index
-        com_count += 1
-
-        out_path = values['-PATH_IN-'] + '/output.mp4'
+        out_path = os.path.join(values['-PATH_IN-'], 'output.mp4')
         try:
             voice_id = voice_names.index(values['-VOICE_LIST-'])
         except ValueError:
@@ -373,39 +423,60 @@ def gui(gui_auth):
         if event == pg.WIN_CLOSED:
             break
 
-        elif event == 'Get post':
+        elif event == 'GO':
+            sub = values['-SUBREDDIT-']
             try:
-                title = get_title_by_id(gui_auth, values[0])
-                window['-ML-'].print(
-                    f'Type: Reddit post\nTitle: {title}\nID: {values[0]}\nVoice: {voice_names[voice_id]}\nGenerating video...')
-                window['-ML-'].print(
-                    'WARNING - This might take some time, Do not close the window.', text_color='Orange')
-                try:
-                    threading.Thread(target=make_mp4_posts, args=(
-                        gui_auth, values[0], window, out_path, voice_id), daemon=True).start()
+                post_ids = get_ids(gui_auth, sub)
+                window['-ID-'].Update(values=post_ids)
 
-                except Exception as err:
-                    window['-ML-'].print(err)
+            except Exception as e:
+                window['-SL-'].print(
+                    f'INVALID SUBREDDIT NAME, PLEASE TRY AGAIN', text_color='Orange')
+
+        elif event == 'Select Id':
+            try:
+                post_id = values['-ID-'][0]
+                info = get_title_by_id(gui_auth, post_id)
+                window['-SL-'].print(
+                    f"Title: {info['title']}\nUpvotes: {info['ups']}", text_color='Orange')
+
+            except IndexError:
+                window['-SL-'].print(
+                    f"SELECT AN ID", text_color='Orange')
+
+        elif event == 'Get post':
+            post_id = values['-ID-'][0]
+            print(post_id)
+
+            title = get_title_by_id(gui_auth, post_id)['title']
+            window['-ML-'].print(
+                f'type: Reddit post\nvoice: {voice_names[voice_id]}\ngenerating video...')
+            window['-ML-'].print(
+                'WARNING - This might take some time, Do not close the window.', text_color='Orange')
+            try:
+                threading.Thread(target=make_mp4_posts, args=(
+                    gui_auth, post_id, window, out_path, voice_id), daemon=True).start()
 
             except Exception as err:
-                window['-ML-'].print(err, text_color='Red')
+                window['-ML-'].print(err)
 
         elif event == 'Get comment':
+            post_id = values['-ID-'][0]
             try:
-                title = get_title_by_id(gui_auth, values[0])
+                title = get_title_by_id(gui_auth, post_id)['title']
                 window['-ML-'].print(
-                    f'Type: Reddit comments\nTitle: {title}\nID: {values[0]}\nVoice: {voice_names[voice_id]}\nGenerating video...')
+                    f'type: Reddit comment\nvoice: {voice_names[voice_id]}\ngenerating video...')
                 window['-ML-'].print(
                     'WARNING - This might take some time, Do not close the window.', text_color='Orange')
                 try:
                     threading.Thread(target=make_mp4_comments, args=(
-                        gui_auth, values[0], window, com_count, voice_id), daemon=True).start()
+                        gui_auth, post_id, window, com_count, voice_id, out_path), daemon=True).start()
 
                 except Exception as err:
                     window['-ML-'].print(err)
 
             except Exception as err:
-                window['-ML-'].print(err, text_color='Red')
+                window['-ML-'].print(err, text_color='Orange')
 
         elif event == '-POST_END-':
             print(values[event])
