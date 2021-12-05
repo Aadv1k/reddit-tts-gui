@@ -11,22 +11,13 @@ A python gui program to generate reddit text to speech videos from the id of any
 
 # Todo
 
-**Feel free to suggest any feature or bug via comments or issues**
+- [ ] Putting the events in their own seperate threads
+- [ ] Refactors,and making `main.py` more 'DRY'
+- [ ] Improving the looks of the actual video generated
+- [ ] Dockerizing the application
+- [ ] **Maybe** adding support for more voices (IBM Watson, Amazon TTS, Gtts)
 
-- [x] Get comments based on the permalink
-- [x] Generate mp3 and jpg of the post and its comments; concatenate both of them for a clip, them combine all the clip into one file
-- [x] Migrate to praw
-- [x] Ability to generate tts for post based subreddits (r/nosleep or r/relationships)
-- Better post/comment formatting
-  - [x] Nsfw filter
-- Visual enhancements
-  - [x] Slicing longer posts into to frames or jpg(s)
-- Wrapping it all up into a nice ~~tkinter~~ pysimplegui window
-  - [x] Implemented option for reading post or comments (with title)
-  - [x] Output folder selection
-  - [x] Voice selection
-  - [x] Some clean ups and error handling
-
+**_This project is still in developent, if you face any issues, then contact me via email or raise an issue_**
 
 # Usage
 

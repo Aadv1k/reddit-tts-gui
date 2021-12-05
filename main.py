@@ -48,7 +48,6 @@ def get_comment(auth, post_id):
 
 def get_title_by_id(auth, post_id):
     reddit = auth
-    data = []
     submission = reddit.submission(id=post_id)
     return {
         'title': submission.title,
@@ -63,14 +62,10 @@ def concatenate_video_moviepy(videos, out):
 
 
 def check_folders():
-    if os.path.isdir('temp/') and os.path.isdir('images/'):
+    if os.path.isdir('temp/'):
         pass
     else:
-        try:
-            os.mkdir('temp')
-            os.mkdir('images')
-        except FileExistsError:
-            pass
+        os.mkdir('temp')
 
 
 def create_image(text, output_path, backdrop='wp.jpg', font=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
@@ -135,7 +130,7 @@ def auth():
     )
 
 
-def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_id=1, backdrop='alternate1.jpg', filter_dict=filter_list,
+def make_mp4_posts(praw_auth, post_id, event_window, output='output.mp4', voice_id=1, backdrop='alternate1.jpg', filter_dict=filter_list,
                    Xcord=100, Ycord=100,
                    color=(255, 255, 255)):
     """
@@ -155,7 +150,6 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_i
     post_author = post['author']
 
     check_folders()
-    base_image_path = 'temp'
     base_temp_path = 'temp'
 
     video_clips = []
@@ -177,11 +171,11 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_i
     engine.save_to_file(filtered_title, f'{base_temp_path}/0.mp3')
     engine.runAndWait()
 
-    create_image(wrapped_title, f'{base_image_path}/0.jpg', backdrop=backdrop,
+    create_image(wrapped_title, f'{base_temp_path}/0.jpg', backdrop=backdrop,
                  Xcord=Xcord, Ycord=Ycord, color=color)
 
     create_video_from_audio(
-        f'{base_temp_path}/0.mp3', f'{base_image_path}/0.jpg', f'{base_temp_path}/0.mp4')
+        f'{base_temp_path}/0.mp3', f'{base_temp_path}/0.jpg', f'{base_temp_path}/0.mp4')
     os.remove(f'{base_temp_path}/0.mp3')
     video_clips.insert(0, f'{base_temp_path}/0.mp4')
     text_area.print(f'Created 0.mp4, at {base_temp_path}')
@@ -206,11 +200,11 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_i
                             f'{base_temp_path}/{i}.mp3')
         engine.runAndWait()
 
-        create_image(st, f'{base_image_path}/{i}.jpg', backdrop=backdrop,
+        create_image(st, f'{base_temp_path}/{i}.jpg', backdrop=backdrop,
                      Xcord=Xcord, Ycord=Ycord, color=color)
 
         create_video_from_audio(
-            f'{base_temp_path}/{i}.mp3', f'{base_image_path}/{i}.jpg', f'{base_temp_path}/{i}.mp4')
+            f'{base_temp_path}/{i}.mp3', f'{base_temp_path}/{i}.jpg', f'{base_temp_path}/{i}.mp4')
 
         video_clips.append(f'{base_temp_path}/{i}.mp4')
         text_area.print(f'Created {i}.mp4 at {base_temp_path}')
@@ -224,7 +218,7 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='final.mp4', voice_i
     text_area.print(f'DONE, VIDEO AT {output}', text_color='Orange')
 
 
-def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1, output='final.mp4', backdrop='wp.jpg',
+def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1, output='final.mp4', backdrop='alternate1.jpg',
                       filter_dict=filter_list, font_size=30, Xcord=100, Ycord=100, color=(237, 230, 211)):
     """
     A function which creates a video from jpg and audio files of reddit posts with the id.
@@ -333,11 +327,11 @@ make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 """
 
 
-def get_ids(auth, sub, window=''):
+def get_ids(auth, sub):
     reddit = auth
     ids = []
     for submission in reddit.subreddit(sub).hot(limit=25):
-        ids.append(submission.id)
+        ids.append(f"{submission.title} --- {submission.id}")
 
     return ids
 
@@ -387,7 +381,7 @@ def gui(gui_auth):
 
             [
                 pg.Text('Voice: '),
-                pg.Combo(voice_names, default_value='Microsoft Hazel Desktop - English (Great Britain)',
+                pg.Combo(voice_names, default_value=engine.getProperty('voices')[0].name,
                          size=(40, 20), key='-VOICE_LIST-')
             ],
         ])],
@@ -395,7 +389,7 @@ def gui(gui_auth):
     ]
 
     frame = [
-        [pg.Frame('Post information', [[pg.Multiline(size=(40, 10), do_not_clear=True,
+        [pg.Frame('Post information', [[pg.Multiline(size=(35, 10), do_not_clear=True,
                                                      key='-SL-', font=('Consolas', 12))]])],
 
         [pg.Frame('Video status', [[pg.Multiline(size=(40, 10), do_not_clear=True,
@@ -427,6 +421,7 @@ def gui(gui_auth):
             sub = values['-SUBREDDIT-']
             try:
                 post_ids = get_ids(gui_auth, sub)
+
                 window['-ID-'].Update(values=post_ids)
 
             except Exception as e:
@@ -435,7 +430,7 @@ def gui(gui_auth):
 
         elif event == 'Select Id':
             try:
-                post_id = values['-ID-'][0]
+                post_id = (values['-ID-'][0]).split('---')[1]
                 info = get_title_by_id(gui_auth, post_id)
                 window['-SL-'].print(
                     f"Title: {info['title']}\nUpvotes: {info['ups']}", text_color='Orange')
@@ -445,7 +440,7 @@ def gui(gui_auth):
                     f"SELECT AN ID", text_color='Orange')
 
         elif event == 'Get post':
-            post_id = values['-ID-'][0]
+            post_id = (values['-ID-'][0]).split('---')[1]
             print(post_id)
 
             title = get_title_by_id(gui_auth, post_id)['title']
@@ -461,7 +456,7 @@ def gui(gui_auth):
                 window['-ML-'].print(err)
 
         elif event == 'Get comment':
-            post_id = values['-ID-'][0]
+            post_id = (values['-ID-'][0]).split('---')[1]
             try:
                 title = get_title_by_id(gui_auth, post_id)['title']
                 window['-ML-'].print(
