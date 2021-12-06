@@ -52,6 +52,9 @@ def get_title_by_id(auth, post_id):
     return {
         'title': submission.title,
         'ups': submission.ups,
+        'author': submission.author,
+        'Comments': submission.num_comments,
+        'NSFW': submission.over_18,
     }
 
 
@@ -188,10 +191,10 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='output.mp4', voice_
     # SIZE - 35
     # Main text width (defines the length of the text in the picture) = 2000
     # Sentence width (defines the width of the sentence) = 110
-    wrapped_text = wrap_text(unwrapped_text, width=2200)
+    wrapped_text = wrap_text(unwrapped_text, width=2300)
     i = 1
     for paragraphs in wrapped_text:
-        paragraphs = wrap_text(f'{paragraphs}', width=120)
+        paragraphs = wrap_text(f'{paragraphs}', width=110)
         st = ""
         for sentences in paragraphs:
             st += sentences + '\n'
@@ -213,8 +216,20 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='output.mp4', voice_
 
         i += 1
 
+    approx_time = len(video_clips) * 0.11  # Works surprisingly well
     text_area.print(f'Combining clips...')
+
+    print(len(video_clips), approx_time)
+
+    import time
+
+    text_area.print(
+        f'It might take approximately {approx_time} minutes to combine the videos.')
+
+    t1_start = time.process_time()
     concatenate_video_moviepy(video_clips, output)
+    t1_stop = time.process_time()
+    print(t1_stop, t1_start)
     text_area.print(f'DONE, VIDEO AT {output}', text_color='Orange')
 
 
@@ -327,13 +342,13 @@ make_mp4_comments(a, 'qv7kun', backdrop='wp.jpg', number_of_comments=2)
 """
 
 
-def get_ids(auth, sub):
+def get_ids(auth, sub, window):
     reddit = auth
     ids = []
     for submission in reddit.subreddit(sub).hot(limit=25):
         ids.append(f"{submission.title} --- {submission.id}")
 
-    return ids
+    window.Update(values=ids)
 
 
 def gui(gui_auth):
@@ -420,20 +435,20 @@ def gui(gui_auth):
         elif event == 'GO':
             sub = values['-SUBREDDIT-']
             try:
-                post_ids = get_ids(gui_auth, sub)
+                threading.Thread(target=get_ids, args=(
+                    gui_auth, sub, window['-ID-']), daemon=True).start()
 
-                window['-ID-'].Update(values=post_ids)
-
-            except Exception as e:
+            except Exception as _:
                 window['-SL-'].print(
                     f'INVALID SUBREDDIT NAME, PLEASE TRY AGAIN', text_color='Orange')
 
         elif event == 'Select Id':
             try:
+                window['-SL-'].Update('')
                 post_id = (values['-ID-'][0]).split('---')[1]
                 info = get_title_by_id(gui_auth, post_id)
                 window['-SL-'].print(
-                    f"Title: {info['title']}\nUpvotes: {info['ups']}", text_color='Orange')
+                    f"Title: {info['title']}\nUpvotes: {info['ups']}\nAuthor: {info['author']}\nComments: {info['Comments']}", text_color='Orange')
 
             except IndexError:
                 window['-SL-'].print(
@@ -443,7 +458,6 @@ def gui(gui_auth):
             post_id = (values['-ID-'][0]).split('---')[1]
             print(post_id)
 
-            title = get_title_by_id(gui_auth, post_id)['title']
             window['-ML-'].print(
                 f'type: Reddit post\nvoice: {voice_names[voice_id]}\ngenerating video...')
             window['-ML-'].print(
@@ -458,7 +472,6 @@ def gui(gui_auth):
         elif event == 'Get comment':
             post_id = (values['-ID-'][0]).split('---')[1]
             try:
-                title = get_title_by_id(gui_auth, post_id)['title']
                 window['-ML-'].print(
                     f'type: Reddit comment\nvoice: {voice_names[voice_id]}\ngenerating video...')
                 window['-ML-'].print(
