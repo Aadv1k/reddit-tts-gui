@@ -12,6 +12,7 @@ A python gui program to generate reddit text to speech videos from the id of any
 # Todo
 
 - [ ] Putting the events in their own seperate threads
+- [ ] Implementing `settings.json` for smaller customizations
 - [ ] Refactors,and making `main.py` more 'DRY'
 - [ ] Improving the looks of the actual video generated
 - [ ] Dockerizing the application
