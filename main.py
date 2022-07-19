@@ -1,5 +1,6 @@
 import threading
 import PySimpleGUI
+from gtts import gTTS
 import moviepy
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip
 import textwrap
@@ -57,6 +58,10 @@ def get_title_by_id(auth, post_id):
         'NSFW': submission.over_18,
     }
 
+
+def create_sound_clip(input, outfile, lang="en", tld="com"):
+    tts = gTTS(input, lang=lang, tld=tld)
+    tts.save(outfile)
 
 def concatenate_video_moviepy(videos, out):
     clips = [VideoFileClip(c) for c in videos]
@@ -157,10 +162,6 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='output.mp4', voice_
 
     video_clips = []
     # TODO change settings for mape_mp4_comments too
-    engine = pyttsx3.init()
-    voices = engine.getProperty('voices')
-    engine.setProperty('rate', 170)
-    engine.setProperty('voice', voices[voice_id].id)
     title = get_title_by_id(praw_auth, post_id)['title']
 
     # Save the title image
@@ -171,8 +172,8 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='output.mp4', voice_
     filtered_title = filter_nsfw(wrapped_title, filter_dict)
     print(filtered_title)
     # Save the title
-    engine.save_to_file(filtered_title, f'{base_temp_path}/0.mp3')
-    engine.runAndWait()
+    create_sound_clip(filtered_title, f'{base_temp_path}/0.mp3')
+    
 
     create_image(wrapped_title, f'{base_temp_path}/0.jpg', backdrop=backdrop,
                  Xcord=Xcord, Ycord=Ycord, color=color)
@@ -199,9 +200,8 @@ def make_mp4_posts(praw_auth, post_id, event_window, output='output.mp4', voice_
         for sentences in paragraphs:
             st += sentences + '\n'
 
-        engine.save_to_file(filter_nsfw(st, filter_dict),
+        create_sound_clip(filter_nsfw(st, filter_dict),
                             f'{base_temp_path}/{i}.mp3')
-        engine.runAndWait()
 
         create_image(st, f'{base_temp_path}/{i}.jpg', backdrop=backdrop,
                      Xcord=Xcord, Ycord=Ycord, color=color)
@@ -251,16 +251,10 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
     check_folders()
     base_temp_path = 'temp'
 
-    video_clips = []
-    engine = pyttsx3.init()
-    voices = engine.getProperty('voices')
-    engine.setProperty('rate', 175)
-    engine.setProperty('voice', voices[voice].id)
     title = get_title_by_id(praw_auth, post_id)['title']
 
     # Save the title audio
-    engine.save_to_file(title, f'{base_temp_path}/0.mp3')
-    engine.runAndWait()
+    create_sound_clip(title, f'{base_temp_path}/0.mp3')
 
     # Save the title image
     wrapped_title = ""
@@ -268,8 +262,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
         wrapped_title += words + '\n'
 
     filtered_title = filter_nsfw(wrapped_title, filter_dict)
-    engine.save_to_file(filtered_title, f'{base_temp_path}/0.mp3')
-    engine.runAndWait()
+    create_sound_clip(filtered_title, f'{base_temp_path}/0.mp3')
 
     create_image(filtered_title, f'{base_temp_path}/0.jpg', backdrop=backdrop,
                  Xcord=Xcord, Ycord=Ycord, color=color, font=font_size)
@@ -298,8 +291,7 @@ def make_mp4_comments(praw_auth, post_id, window, number_of_comments=10, voice=1
         filtered_text = filter_nsfw(comment['body'], filter_dict)
 
         # Saves mp3 of the comment to a file
-        engine.save_to_file(filtered_text, f'{base_temp_path}/{i}.mp3')
-        engine.runAndWait()
+        create_sound_clip(filtered_text, f'{base_temp_path}/{i}.mp3')
 
         # Create text which is broken down
         unwrapped_text = filtered_text
@@ -352,10 +344,8 @@ def get_ids(auth, sub, window):
 
 
 def gui(gui_auth):
-    engine = pyttsx3.init()
-    voice_names = []
-    for voice_properties in engine.getProperty('voices'):
-        voice_names.append(voice_properties.name)
+    # NOTE: Not using pyttsx3 anymore.
+    voice_names = ['DEPRICATED']
     pg = PySimpleGUI
     pg.theme('DarkAmber')
 
@@ -393,12 +383,6 @@ def gui(gui_auth):
                 pg.FolderBrowse(button_text='browse',
                                 key='-FB-', initial_folder='.')
             ],
-
-            [
-                pg.Text('Voice: '),
-                pg.Combo(voice_names, default_value=engine.getProperty('voices')[0].name,
-                         size=(40, 20), key='-VOICE_LIST-')
-            ],
         ])],
 
     ]
@@ -424,10 +408,6 @@ def gui(gui_auth):
         event, values = window.read()
         com_count = values['-SLIDER-']
         out_path = os.path.join(values['-PATH_IN-'], 'output.mp4')
-        try:
-            voice_id = voice_names.index(values['-VOICE_LIST-'])
-        except ValueError:
-            voice_id = 1
 
         if event == pg.WIN_CLOSED:
             break
@@ -459,12 +439,13 @@ def gui(gui_auth):
             print(post_id)
 
             window['-ML-'].print(
-                f'type: Reddit post\nvoice: {voice_names[voice_id]}\ngenerating video...')
+                # TODO: Change the voice param here
+                f'type: Reddit post\nvoice: "google"\ngenerating video...')
             window['-ML-'].print(
                 'WARNING - This might take some time, Do not close the window.', text_color='Orange')
             try:
                 threading.Thread(target=make_mp4_posts, args=(
-                    gui_auth, post_id, window, out_path, voice_id), daemon=True).start()
+                    gui_auth, post_id, window, out_path), daemon=True).start()
 
             except Exception as err:
                 window['-ML-'].print(err)
@@ -473,12 +454,12 @@ def gui(gui_auth):
             post_id = (values['-ID-'][0]).split('---')[1]
             try:
                 window['-ML-'].print(
-                    f'type: Reddit comment\nvoice: {voice_names[voice_id]}\ngenerating video...')
+                    f'type: Reddit comment\nvoice: "google"\ngenerating video...')
                 window['-ML-'].print(
                     'WARNING - This might take some time, Do not close the window.', text_color='Orange')
                 try:
                     threading.Thread(target=make_mp4_comments, args=(
-                        gui_auth, post_id, window, com_count, voice_id, out_path), daemon=True).start()
+                        gui_auth, post_id, window, com_count, out_path), daemon=True).start()
 
                 except Exception as err:
                     window['-ML-'].print(err)
