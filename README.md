@@ -1,6 +1,8 @@
 # Reddit text to speech generator
 
-A python gui program to generate reddit text to speech videos from the id of any post.
+**_This development for this project has ended, I don't plan on fixing or further supporting this_**
+
+A python gui program to generate reddit text to speech videos from posts or comments.
 
 # Current functionality
 
@@ -9,16 +11,6 @@ A python gui program to generate reddit text to speech videos from the id of any
 - Easy login, all you need to do, is run `main.py`, you will get a link; go to the link and click allow; Thats it! the credentials are written to a json file so you dont need to repeat this step as long as the `token.json` file is there.
 - Ability to cherry pick individual posts for which the video has to be made, within the GUI (refer to screenshots)
 
-# Todo
-
-- [ ] Putting the events in their own seperate threads
-- [ ] Implementing `settings.json` for smaller customizations
-- [ ] Refactors,and making `main.py` more 'DRY'
-- [ ] Improving the looks of the actual video generated
-- [ ] Dockerizing the application
-- [ ] **Maybe** adding support for more voices (IBM Watson, Amazon TTS, Gtts)
-
-**_This project is still in development, Feel free to raise an issue for a feature, query or bug_**
 
 # Usage
 
